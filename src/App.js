@@ -9,7 +9,7 @@ import {
 import axios from "axios";
 import "./index.css";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://ycrush-backend.onrender.com";
 
 function Home() {
   const [token, setToken] = useState(localStorage.getItem("authToken"));
@@ -108,7 +108,7 @@ function Home() {
 
   return (
     <div className="app">
-      <h1 className="title">Yale Dating</h1>
+      <h1 className="title">YCrush 💖</h1>
       {user ? (
         <>
           <div className="user-box">
