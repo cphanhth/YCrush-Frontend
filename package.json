@@ -16,9 +16,10 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "serve -s build",
-    "build": "react-scripts build"
-  },
+  "prebuild": "npm ls react-scripts && node -v && npm -v",
+  "build": "react-scripts build",
+  "start": "serve -s build"
+},
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -41,5 +42,8 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.15"
-  }
+  },
+  "engines": {
+  "node": "18.x"
+}
 }
