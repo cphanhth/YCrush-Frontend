@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/YCrush-Frontend/static/css/main.caf9ea00.css",
+    "main.js": "/YCrush-Frontend/static/js/main.0f030068.js",
+    "static/js/453.e8a32c84.chunk.js": "/YCrush-Frontend/static/js/453.e8a32c84.chunk.js",
+    "index.html": "/YCrush-Frontend/index.html",
+    "main.caf9ea00.css.map": "/YCrush-Frontend/static/css/main.caf9ea00.css.map",
+    "main.0f030068.js.map": "/YCrush-Frontend/static/js/main.0f030068.js.map",
+    "453.e8a32c84.chunk.js.map": "/YCrush-Frontend/static/js/453.e8a32c84.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.caf9ea00.css",
+    "static/js/main.0f030068.js"
+  ]
+}
