@@ -3,10 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
-    "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -15,11 +11,23 @@
     "serve": "^14.2.4",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.15",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^13.5.0"
+  },
   "scripts": {
-  "prebuild": "npm ls react-scripts && node -v && npm -v",
-  "build": "react-scripts build",
-  "start": "serve -s build"
-},
+    "prebuild": "npm ls react-scripts && node -v && npm -v",
+    "build": "react-scripts build",
+    "start": "serve -s build"
+  },
+  "engines": {
+    "node": "18.x"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -37,13 +45,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.15"
-  },
-  "engines": {
-  "node": "18.x"
-}
+  }
 }
