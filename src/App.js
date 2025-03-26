@@ -1,5 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  Link,
+} from "react-router-dom";
 import axios from "axios";
 import "./index.css";
 
@@ -221,4 +228,74 @@ function Home() {
   );
 }
 
-export default Home;
+function MatchesPage() {
+  const [matches, setMatches] = useState([]);
+  const [likesCount, setLikesCount] = useState(0);
+  const token = localStorage.getItem("authToken");
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/who-liked-me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setMatches(res.data);
+        setLikesCount(res.data.length);
+      } catch (err) {
+        console.error("❌ Error fetching matches:", err);
+      }
+    };
+    fetchMatches();
+  }, [token]);
+
+  return (
+    <div className="app">
+      <h1 className="title">Your Matches ({likesCount})</h1>
+      <Link to="/" className="btn btn-skip">← Back</Link>
+      <div className="matches">
+        {matches.map((match, i) => (
+          <div key={i} className="match-box">
+            <img
+              src={match.photo || "https://picsum.photos/50"}
+              alt="Match"
+              className="match-photo"
+            />
+            <p>{match.firstName} {match.lastName}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AuthCallback() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const token = query.get("token");
+    if (token) {
+      localStorage.setItem("authToken", token);
+      navigate("/");
+    } else {
+      console.error("❌ No token found in callback");
+    }
+  }, [location, navigate]);
+
+  return <p>Logging in...</p>;
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/auth" element={<AuthCallback />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/matches" element={<MatchesPage />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
