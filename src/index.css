@@ -53,6 +53,7 @@ body {
   margin: 10px 5px;
   cursor: pointer;
   font-weight: 600;
+  transition: transform 0.2s, background-color 0.2s;
 }
 
 .btn-login {
@@ -70,8 +71,19 @@ body {
   color: white;
 }
 
+/* Hover animation for Like button */
+.btn-like:hover {
+  transform: scale(1.05);
+  background-color: #059669; /* Slightly darker green */
+}
+
 .btn-skip {
   background: #9ca3af;
+  color: white;
+}
+
+.btn-matches {
+  background: #2563eb; /* A nice Yale-ish blue */
   color: white;
 }
 
@@ -99,9 +111,11 @@ body {
   text-align: left;
 }
 
+/* Use justify-content: space-between to push the Like button to the right */
 .match-box {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 10px;
   background: #fff;
   padding: 10px;
@@ -117,6 +131,7 @@ body {
   margin-right: 10px;
 }
 
+/* If you have a 'chat' button, keep it as is. */
 .btn-chat {
   margin-left: auto;
   background: #4b5563;
@@ -134,4 +149,24 @@ body {
   border-radius: 6px;
   text-align: left;
   font-size: 14px;
+}
+
+/* Make the number of likes more obvious */
+.likes-count {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #10b981;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Optional swipe-out animation for the random profile card */
+.swipe-out {
+  animation: swipeAnimation 0.3s forwards;
+}
+@keyframes swipeAnimation {
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }

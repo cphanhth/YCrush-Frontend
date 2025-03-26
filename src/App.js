@@ -1,12 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-  Link,
-} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./index.css";
 
@@ -18,6 +11,8 @@ function Home() {
   const [profile, setProfile] = useState(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [likesCount, setLikesCount] = useState(0);
+
   const navigate = useNavigate();
   const profileCardRef = useRef(null);
 
@@ -30,25 +25,11 @@ function Home() {
     if (token) {
       fetchUser();
       fetchProfile();
+      fetchLikesCount();
     }
   }, [token]);
 
-  useEffect(() => {
-    const fetchSearch = async () => {
-      if (!searchInput.trim()) return setSearchResults([]);
-      try {
-        const res = await axios.get(
-          `${BACKEND_URL}/profiles/search?q=${encodeURIComponent(searchInput)}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setSearchResults(res.data);
-      } catch (err) {
-        console.error("❌ Search error:", err);
-      }
-    };
-    fetchSearch();
-  }, [searchInput, token]);
-
+  // Fetch current user
   const fetchUser = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/me`, {
@@ -60,6 +41,7 @@ function Home() {
     }
   };
 
+  // Fetch a random profile
   const fetchProfile = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/profiles/random`, {
@@ -71,6 +53,40 @@ function Home() {
     }
   };
 
+  // Fetch how many people liked me
+  const fetchLikesCount = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/who-liked-me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Show the count (even if it's zero)
+      setLikesCount(res.data.length);
+    } catch (err) {
+      console.error("❌ Error fetching likes:", err);
+    }
+  };
+
+  // Search for people
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (!searchInput.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      try {
+        const res = await axios.get(
+          `${BACKEND_URL}/profiles/search?q=${encodeURIComponent(searchInput)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setSearchResults(res.data);
+      } catch (err) {
+        console.error("❌ Search error:", err);
+      }
+    };
+    if (token) fetchSearch();
+  }, [searchInput, token]);
+
+  // Like a profile
   const likeProfile = async (targetProfile, fetchNext = false) => {
     if (!token || !targetProfile) return;
     try {
@@ -80,12 +96,14 @@ function Home() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (fetchNext) fetchProfile();
+      // Optionally refetch likes count if you want it updated in real time
+      fetchLikesCount();
     } catch (err) {
       console.error("❌ Like error:", err);
     }
   };
 
-  // Swipe-like function for the profile card
+  // Optional "swipe-like" effect
   const swipeLike = () => {
     if (profileCardRef.current && profile) {
       profileCardRef.current.classList.add("swipe-out");
@@ -110,6 +128,7 @@ function Home() {
   return (
     <div className="app">
       <h1 className="title">YCrush 💙</h1>
+
       {user ? (
         <>
           <div className="user-box">
@@ -117,12 +136,17 @@ function Home() {
               Logged in as: <strong>{user.firstName} {user.lastName}</strong>
             </p>
           </div>
+
+          {/* Show how many people have liked you (including zero) */}
+          <p className="likes-count">You have {likesCount} like(s).</p>
+
           <div className="btn-row">
             <button onClick={logout} className="btn btn-logout">Logout</button>
+            {/* Make the Matches link look like a button */}
             <Link to="/matches" className="btn btn-matches">Matches</Link>
           </div>
 
-          {/* Random Profile Section with swipe effect */}
+          {/* Random Profile Section */}
           <div className="profile-card" ref={profileCardRef}>
             {profile ? (
               <>
@@ -134,8 +158,15 @@ function Home() {
                 <h2>{profile.firstName} {profile.lastName}, {profile.year}</h2>
                 <p>{profile.college}</p>
                 <div className="btn-row">
-                  <button className="btn btn-like hover-grow" onClick={swipeLike}>
+                  <button
+                    className="btn btn-like"
+                    onClick={swipeLike}
+                  >
                     Like
+                  </button>
+                  {/* "Next" button restored */}
+                  <button className="btn btn-skip" onClick={fetchProfile}>
+                    Next
                   </button>
                 </div>
               </>
@@ -144,8 +175,8 @@ function Home() {
             )}
           </div>
 
-          {/* Search Container fixed at the bottom */}
-          <div className="search-container-bottom">
+          {/* Search Input & Results */}
+          <div className="search-box">
             <input
               type="text"
               placeholder="Search by exact name..."
@@ -153,29 +184,33 @@ function Home() {
               onChange={(e) => setSearchInput(e.target.value)}
               className="search-input"
             />
-            {searchResults.length > 0 && (
-              <div className="search-results-bottom">
-                {searchResults.map((match) => (
-                  <div key={match._id} className="match-box">
-                    <img
-                      src={match.photo || "https://picsum.photos/50"}
-                      alt="Match"
-                      className="match-photo"
-                    />
-                    <div className="match-info">
-                      <p>
-                        <strong>{match.firstName} {match.lastName}</strong>
-                      </p>
-                      <p>{match.college}</p>
-                    </div>
-                    <button className="btn btn-like hover-grow" onClick={() => likeProfile(match)}>
-                      Like
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
+          {searchResults.length > 0 && (
+            <div className="matches">
+              <h3>Search Results</h3>
+              {searchResults.map((match) => (
+                <div key={match._id} className="match-box">
+                  <img
+                    src={match.photo || "https://picsum.photos/50"}
+                    alt="Match"
+                    className="match-photo"
+                  />
+                  <div>
+                    <p>
+                      <strong>{match.firstName} {match.lastName}</strong>
+                    </p>
+                    <p>{match.college}</p>
+                  </div>
+                  <button
+                    className="btn btn-like"
+                    onClick={() => likeProfile(match)}
+                  >
+                    Like
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       ) : (
         <button onClick={login} className="btn btn-login">
@@ -186,74 +221,4 @@ function Home() {
   );
 }
 
-function MatchesPage() {
-  const [matches, setMatches] = useState([]);
-  const [likesCount, setLikesCount] = useState(0);
-  const token = localStorage.getItem("authToken");
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/who-liked-me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setMatches(res.data);
-        setLikesCount(res.data.length);
-      } catch (err) {
-        console.error("❌ Error fetching matches:", err);
-      }
-    };
-    fetchMatches();
-  }, [token]);
-
-  return (
-    <div className="app">
-      <h1 className="title">Your Matches ({likesCount})</h1>
-      <Link to="/" className="btn btn-skip">← Back</Link>
-      <div className="matches">
-        {matches.map((match, i) => (
-          <div key={i} className="match-box">
-            <img
-              src={match.photo || "https://picsum.photos/50"}
-              alt="Match"
-              className="match-photo"
-            />
-            <p>{match.firstName} {match.lastName}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AuthCallback() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    const token = query.get("token");
-    if (token) {
-      localStorage.setItem("authToken", token);
-      navigate("/");
-    } else {
-      console.error("❌ No token found in callback");
-    }
-  }, [location, navigate]);
-
-  return <p>Logging in...</p>;
-}
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/auth" element={<AuthCallback />} />
-        <Route path="/" element={<Home />} />
-        <Route path="/matches" element={<MatchesPage />} />
-      </Routes>
-    </Router>
-  );
-}
-
-export default App;
+export default Home;
