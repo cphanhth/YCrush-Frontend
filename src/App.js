@@ -1,3 +1,5 @@
+// Updated frontend code for YCrush with Yale color theme, animated like button, matches route, search at bottom, and swipe-like
+
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
@@ -5,6 +7,7 @@ import {
   Route,
   useNavigate,
   useLocation,
+  Link,
 } from "react-router-dom";
 import axios from "axios";
 import "./index.css";
@@ -14,20 +17,16 @@ const BACKEND_URL = "https://ycrush-backend.onrender.com";
 function Home() {
   const [token, setToken] = useState(localStorage.getItem("authToken"));
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null); // Random profile
+  const [profile, setProfile] = useState(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [matches, setMatches] = useState([]);
   const navigate = useNavigate();
 
-  // Load token on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
     if (storedToken) setToken(storedToken);
   }, []);
 
-  // Fetch user and random profile on token
   useEffect(() => {
     if (token) {
       fetchUser();
@@ -35,7 +34,6 @@ function Home() {
     }
   }, [token]);
 
-  // Real-time search effect
   useEffect(() => {
     const fetchSearch = async () => {
       if (!searchInput.trim()) return setSearchResults([]);
@@ -69,17 +67,12 @@ function Home() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProfile(res.data);
-      setCurrentIndex(0);
     } catch (err) {
       console.error("❌ /profiles/random error:", err);
     }
   };
 
-  const nextProfile = () => {
-    fetchProfile(); // Just get another random one
-  };
-
-  const likeProfile = async (targetProfile) => {
+  const likeProfile = async (targetProfile, fetchNext = false) => {
     if (!token || !targetProfile) return;
     try {
       const res = await axios.post(
@@ -87,9 +80,7 @@ function Home() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (res.data.message === "It's a match!") {
-        setMatches([...matches, targetProfile]);
-      }
+      if (fetchNext) fetchProfile();
     } catch (err) {
       console.error("❌ Like error:", err);
     }
@@ -108,28 +99,18 @@ function Home() {
 
   return (
     <div className="app">
-      <h1 className="title">YCrush 💖</h1>
+      <h1 className="title">YCrush 💙</h1>
       {user ? (
         <>
           <div className="user-box">
             <p>
-              Logged in as:{" "}
-              <strong>
-                {user.firstName} {user.lastName}
-              </strong>
+              Logged in as: <strong>{user.firstName} {user.lastName}</strong>
             </p>
           </div>
-          <button onClick={logout} className="btn btn-logout">
-            Logout
-          </button>
-
-          <input
-            type="text"
-            placeholder="Search by exact name..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="search-input"
-          />
+          <div className="btn-row">
+            <button onClick={logout} className="btn btn-logout">Logout</button>
+            <Link to="/matches" className="btn btn-matches">Matches</Link>
+          </div>
 
           {/* Search Results */}
           {searchResults.length > 0 && (
@@ -137,21 +118,12 @@ function Home() {
               <h2>Search Results</h2>
               {searchResults.map((match) => (
                 <div key={match._id} className="match-box">
-                  <img
-                    src={match.photo || "https://picsum.photos/50"}
-                    alt="Match"
-                    className="match-photo"
-                  />
+                  <img src={match.photo || "https://picsum.photos/50"} alt="Match" className="match-photo" />
                   <div>
-                    <p>
-                      <strong>{match.firstName} {match.lastName}</strong>
-                    </p>
+                    <p><strong>{match.firstName} {match.lastName}</strong></p>
                     <p>{match.college}</p>
                   </div>
-                  <button
-                    className="btn btn-like"
-                    onClick={() => likeProfile(match)}
-                  >
+                  <button className="btn btn-like hover-grow" onClick={() => likeProfile(match)}>
                     Like
                   </button>
                 </div>
@@ -168,16 +140,11 @@ function Home() {
                   alt="Profile"
                   className="profile-photo"
                 />
-                <h2>
-                  {profile.firstName} {profile.lastName}, {profile.year}
-                </h2>
+                <h2>{profile.firstName} {profile.lastName}, {profile.year}</h2>
                 <p>{profile.college}</p>
                 <div className="btn-row">
-                  <button className="btn btn-like" onClick={() => likeProfile(profile)}>
+                  <button className="btn btn-like hover-grow" onClick={() => likeProfile(profile, true)}>
                     Like
-                  </button>
-                  <button className="btn btn-skip" onClick={nextProfile}>
-                    Next
                   </button>
                 </div>
               </>
@@ -186,30 +153,54 @@ function Home() {
             )}
           </div>
 
-          {/* Matches */}
-          <h2>Your Matches</h2>
-          <div className="matches">
-            {matches.length > 0 ? (
-              matches.map((match, i) => (
-                <div key={i} className="match-box">
-                  <img
-                    src={match.photo || "https://picsum.photos/50"}
-                    alt="Match"
-                    className="match-photo"
-                  />
-                  <p>{match.firstName} {match.lastName}</p>
-                </div>
-              ))
-            ) : (
-              <p>No matches yet.</p>
-            )}
-          </div>
+          {/* Search input moved to bottom */}
+          <input
+            type="text"
+            placeholder="Search by exact name..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="search-input search-bottom"
+          />
         </>
       ) : (
-        <button onClick={login} className="btn btn-login">
-          Login with Yale CAS
-        </button>
+        <button onClick={login} className="btn btn-login">Login with Yale CAS</button>
       )}
+    </div>
+  );
+}
+
+function MatchesPage() {
+  const [matches, setMatches] = useState([]);
+  const [likesCount, setLikesCount] = useState(0);
+  const token = localStorage.getItem("authToken");
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/who-liked-me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setMatches(res.data);
+        setLikesCount(res.data.length);
+      } catch (err) {
+        console.error("❌ Error fetching matches:", err);
+      }
+    };
+    fetchMatches();
+  }, [token]);
+
+  return (
+    <div className="app">
+      <h1 className="title">Your Matches ({likesCount})</h1>
+      <Link to="/" className="btn btn-skip">← Back</Link>
+      <div className="matches">
+        {matches.map((match, i) => (
+          <div key={i} className="match-box">
+            <img src={match.photo || "https://picsum.photos/50"} alt="Match" className="match-photo" />
+            <p>{match.firstName} {match.lastName}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -238,6 +229,7 @@ function App() {
       <Routes>
         <Route path="/auth" element={<AuthCallback />} />
         <Route path="/" element={<Home />} />
+        <Route path="/matches" element={<MatchesPage />} />
       </Routes>
     </Router>
   );
