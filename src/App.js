@@ -61,13 +61,13 @@ function Home() {
   };
 
   // Fetch how many people liked me
+  // (this calls /who-liked-me, which now returns an array of users who liked me)
   const fetchLikesCount = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/who-liked-me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Show the count (even if it's zero)
-      setLikesCount(res.data.length);
+      setLikesCount(res.data.length); // even if 0
     } catch (err) {
       console.error("❌ Error fetching likes:", err);
     }
@@ -103,7 +103,7 @@ function Home() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (fetchNext) fetchProfile();
-      // Optionally refetch likes count if you want it updated in real time
+      // Optionally refetch likes count to update in real time
       fetchLikesCount();
     } catch (err) {
       console.error("❌ Like error:", err);
@@ -171,7 +171,7 @@ function Home() {
                   >
                     Like
                   </button>
-                  {/* "Next" button restored */}
+                  {/* "Next" button */}
                   <button className="btn btn-skip" onClick={fetchProfile}>
                     Next
                   </button>
@@ -236,6 +236,7 @@ function MatchesPage() {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
+        // This calls /who-liked-me, which returns user.likedBy
         const res = await axios.get(`${BACKEND_URL}/who-liked-me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
