@@ -1,6 +1,4 @@
-// Updated frontend code for YCrush with Yale color theme, animated like button, matches route, search at bottom, and swipe-like
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -21,6 +19,7 @@ function Home() {
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const navigate = useNavigate();
+  const profileCardRef = useRef(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
@@ -75,7 +74,7 @@ function Home() {
   const likeProfile = async (targetProfile, fetchNext = false) => {
     if (!token || !targetProfile) return;
     try {
-      const res = await axios.post(
+      await axios.post(
         `${BACKEND_URL}/like/${targetProfile._id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
@@ -83,6 +82,17 @@ function Home() {
       if (fetchNext) fetchProfile();
     } catch (err) {
       console.error("❌ Like error:", err);
+    }
+  };
+
+  // Swipe-like function for the profile card
+  const swipeLike = () => {
+    if (profileCardRef.current && profile) {
+      profileCardRef.current.classList.add("swipe-out");
+      setTimeout(() => {
+        likeProfile(profile, true);
+        profileCardRef.current.classList.remove("swipe-out");
+      }, 300);
     }
   };
 
@@ -112,27 +122,8 @@ function Home() {
             <Link to="/matches" className="btn btn-matches">Matches</Link>
           </div>
 
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="matches">
-              <h2>Search Results</h2>
-              {searchResults.map((match) => (
-                <div key={match._id} className="match-box">
-                  <img src={match.photo || "https://picsum.photos/50"} alt="Match" className="match-photo" />
-                  <div>
-                    <p><strong>{match.firstName} {match.lastName}</strong></p>
-                    <p>{match.college}</p>
-                  </div>
-                  <button className="btn btn-like hover-grow" onClick={() => likeProfile(match)}>
-                    Like
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Random Profile Section */}
-          <div className="profile-card">
+          {/* Random Profile Section with swipe effect */}
+          <div className="profile-card" ref={profileCardRef}>
             {profile ? (
               <>
                 <img
@@ -143,7 +134,7 @@ function Home() {
                 <h2>{profile.firstName} {profile.lastName}, {profile.year}</h2>
                 <p>{profile.college}</p>
                 <div className="btn-row">
-                  <button className="btn btn-like hover-grow" onClick={() => likeProfile(profile, true)}>
+                  <button className="btn btn-like hover-grow" onClick={swipeLike}>
                     Like
                   </button>
                 </div>
@@ -153,17 +144,43 @@ function Home() {
             )}
           </div>
 
-          {/* Search input moved to bottom */}
-          <input
-            type="text"
-            placeholder="Search by exact name..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="search-input search-bottom"
-          />
+          {/* Search Container fixed at the bottom */}
+          <div className="search-container-bottom">
+            <input
+              type="text"
+              placeholder="Search by exact name..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="search-input"
+            />
+            {searchResults.length > 0 && (
+              <div className="search-results-bottom">
+                {searchResults.map((match) => (
+                  <div key={match._id} className="match-box">
+                    <img
+                      src={match.photo || "https://picsum.photos/50"}
+                      alt="Match"
+                      className="match-photo"
+                    />
+                    <div className="match-info">
+                      <p>
+                        <strong>{match.firstName} {match.lastName}</strong>
+                      </p>
+                      <p>{match.college}</p>
+                    </div>
+                    <button className="btn btn-like hover-grow" onClick={() => likeProfile(match)}>
+                      Like
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       ) : (
-        <button onClick={login} className="btn btn-login">Login with Yale CAS</button>
+        <button onClick={login} className="btn btn-login">
+          Login with Yale CAS
+        </button>
       )}
     </div>
   );
@@ -196,7 +213,11 @@ function MatchesPage() {
       <div className="matches">
         {matches.map((match, i) => (
           <div key={i} className="match-box">
-            <img src={match.photo || "https://picsum.photos/50"} alt="Match" className="match-photo" />
+            <img
+              src={match.photo || "https://picsum.photos/50"}
+              alt="Match"
+              className="match-photo"
+            />
             <p>{match.firstName} {match.lastName}</p>
           </div>
         ))}
