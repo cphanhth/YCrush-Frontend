@@ -567,13 +567,7 @@ function Chat({ match, onClose }) {
         content: newMessage.trim()
       };
       
-      // Add message to local state immediately with the correct sender
-      setMessages(prev => [...prev, {
-        ...messageData,
-        timestamp: new Date(),
-        sender: user._id // Ensure sender is set correctly
-      }]);
-      
+      // Don't add to local state immediately - wait for socket response
       socket.emit('private_message', messageData);
       setNewMessage("");
     } catch (err) {
@@ -592,17 +586,20 @@ function Chat({ match, onClose }) {
       </div>
       
       <div className="messages-container">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`message ${msg.sender.toString() === user?._id.toString() ? 'sent' : 'received'}`}
-          >
-            <p>{msg.content}</p>
-            <span className="timestamp">
-              {new Date(msg.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-        ))}
+        {messages.map((msg, i) => {
+          const isSentByMe = msg.sender === user?._id || msg.sender.toString() === user?._id.toString();
+          return (
+            <div
+              key={i}
+              className={`message ${isSentByMe ? 'sent' : 'received'}`}
+            >
+              <p>{msg.content}</p>
+              <span className="timestamp">
+                {new Date(msg.timestamp).toLocaleTimeString()}
+              </span>
+            </div>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 

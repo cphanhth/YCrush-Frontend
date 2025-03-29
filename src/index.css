@@ -109,16 +109,15 @@ body {
 
 .year-filter-content {
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
+  top: calc(100% + 8px);
+  right: auto;
+  left: 0;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 12px;
-  z-index: 10;
-  min-width: 150px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  width: 120px;
+  transform: translateX(-80%);
 }
 
 .year-filter-content .checkbox-label {
@@ -757,12 +756,14 @@ body {
 .year-filter-content {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  right: auto;
+  left: 0;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   padding: 8px;
   width: 120px;
+  transform: translateX(-80%);
 }
 
 .year-filter-content .checkbox-label {
