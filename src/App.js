@@ -9,8 +9,10 @@ import {
 } from "react-router-dom";
 import axios from "axios";
 import "./index.css";
+import { io } from "socket.io-client";
 
 const BACKEND_URL = "https://ycrush-backend.onrender.com";
+const socket = io(BACKEND_URL);
 
 function Home() {
   const [token, setToken] = useState(localStorage.getItem("authToken"));
@@ -156,7 +158,7 @@ function Home() {
 
   return (
     <div className="app">
-      <div className="nav-bar">
+      <div className={`nav-bar ${!user ? 'nav-bar-centered' : ''}`}>
         <div className="nav-left">
           <h1 className="title">YCrush 💙</h1>
         </div>
@@ -171,36 +173,36 @@ function Home() {
 
       {user ? (
         <>
-          <p className="likes-count">You have {likesCount} like(s).</p>
-
-          <div className="year-filter-dropdown">
-            <button 
-              className="year-filter-btn" 
-              onClick={() => setYearFiltersOpen(!yearFiltersOpen)}
-            >
-              🎓 Class Years {yearFiltersOpen ? '▼' : '▶'}
-            </button>
-            {yearFiltersOpen && (
-              <div className="year-filter-content">
-                {Object.entries(yearFilters).map(([year, checked]) => (
-                  <label key={year} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => handleYearFilterChange(year)}
-                    />
-                    {year}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
+          <p className="likes-count">You have {likesCount} {likesCount === 1 ? 'like' : 'likes'}.</p>
 
           <div className="profile-card" ref={profileCardRef}>
+            <div className="year-filter-menu">
+              <button 
+                className="year-filter-btn" 
+                onClick={() => setYearFiltersOpen(!yearFiltersOpen)}
+              >
+                🎓
+              </button>
+              {yearFiltersOpen && (
+                <div className="year-filter-content">
+                  {Object.entries(yearFilters).map(([year, checked]) => (
+                    <label key={year} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => handleYearFilterChange(year)}
+                      />
+                      {year}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {profile ? (
               <>
                 <img
-                  src={profile.photo || "https://picsum.photos/150"}
+                  src={profile.photo || "https://picsum.photos/300"}
                   alt="Profile"
                   className="profile-photo"
                 />
@@ -236,17 +238,17 @@ function Home() {
               <h3>Search Results</h3>
               {searchResults.map((match) => (
                 <div key={match._id} className="match-box">
-                  <img
-                    src={match.photo || "https://picsum.photos/50"}
-                    alt="Match"
-                    className="match-photo"
-                  />
-                  <div>
-                    <p>
-                      <strong>{match.firstName} {match.lastName}</strong>
-                    </p>
-                    <p>{match.college}</p>
-                    {match.bio && <p className="bio">{match.bio}</p>}
+                  <div className="match-left">
+                    <img
+                      src={match.photo || "https://picsum.photos/100"}
+                      alt="Match"
+                      className="match-photo"
+                    />
+                    <div className="match-info">
+                      <p className="match-name">{match.firstName} {match.lastName}</p>
+                      <p className="match-college">{match.college}</p>
+                      {match.bio && <p className="bio">{match.bio}</p>}
+                    </div>
                   </div>
                   <button className="btn btn-like" onClick={() => likeProfile(match)}>
                     Like
@@ -498,9 +500,121 @@ function ProfileEdit() {
   );
 }
 
+function Chat({ match, onClose }) {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const messagesEndRef = useRef(null);
+  const token = localStorage.getItem("authToken");
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+        // Join socket room
+        socket.emit('join', res.data._id);
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      }
+    };
+    fetchUser();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/chat/${match._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setMessages(res.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+        setLoading(false);
+      }
+    };
+    fetchMessages();
+  }, [match._id, token]);
+
+  useEffect(() => {
+    // Listen for new messages
+    socket.on('new_message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    return () => {
+      socket.off('new_message');
+    };
+  }, []);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !user) return;
+
+    try {
+      socket.emit('private_message', {
+        sender: user._id,
+        receiver: match._id,
+        content: newMessage.trim()
+      });
+      setNewMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
+  };
+
+  if (loading) return <div className="chat-container"><p>Loading...</p></div>;
+
+  return (
+    <div className="chat-container">
+      <div className="chat-header">
+        <img src={match.photo || "https://picsum.photos/50"} alt="Match" className="chat-avatar" />
+        <h3>{match.firstName} {match.lastName}</h3>
+        <button onClick={onClose} className="btn-close">×</button>
+      </div>
+      
+      <div className="messages-container">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`message ${msg.sender === user?._id ? 'sent' : 'received'}`}
+          >
+            <p>{msg.content}</p>
+            <span className="timestamp">
+              {new Date(msg.timestamp).toLocaleTimeString()}
+            </span>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={sendMessage} className="message-form">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message..."
+          className="message-input"
+        />
+        <button type="submit" className="btn-send">Send</button>
+      </form>
+    </div>
+  );
+}
+
 function MatchesPage() {
   const [matches, setMatches] = useState([]);
   const [likesCount, setLikesCount] = useState(0);
+  const [selectedMatch, setSelectedMatch] = useState(null);
   const token = localStorage.getItem("authToken");
 
   useEffect(() => {
@@ -520,19 +634,44 @@ function MatchesPage() {
 
   return (
     <div className="app">
-      <h1 className="title">Your Matches ({likesCount})</h1>
-      <Link to="/" className="btn btn-skip">← Back</Link>
-      <div className="matches">
-        {matches.map((match, i) => (
-          <div key={i} className="match-box">
-            <img
-              src={match.photo || "https://picsum.photos/50"}
-              alt="Match"
-              className="match-photo"
-            />
-            <p>{match.firstName} {match.lastName}</p>
-          </div>
-        ))}
+      <div className="nav-bar">
+        <div className="nav-left">
+          <h1 className="title">YCrush 💙</h1>
+        </div>
+        <div className="nav-right">
+          <Link to="/" className="nav-btn">← Back to Home</Link>
+        </div>
+      </div>
+
+      <h2 className="section-title">Your Matches ({likesCount})</h2>
+      
+      <div className="matches-container">
+        <div className="matches-list">
+          {matches.map((match) => (
+            <div
+              key={match._id}
+              className={`match-box ${selectedMatch?._id === match._id ? 'selected' : ''}`}
+              onClick={() => setSelectedMatch(match)}
+            >
+              <img
+                src={match.photo || "https://picsum.photos/50"}
+                alt="Match"
+                className="match-photo"
+              />
+              <div className="match-info">
+                <p className="match-name">{match.firstName} {match.lastName}</p>
+                <p className="match-college">{match.college}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {selectedMatch && (
+          <Chat
+            match={selectedMatch}
+            onClose={() => setSelectedMatch(null)}
+          />
+        )}
       </div>
     </div>
   );
