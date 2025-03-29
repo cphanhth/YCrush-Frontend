@@ -25,6 +25,7 @@ function Home() {
     2026: true,
     2027: true
   });
+  const [yearFiltersOpen, setYearFiltersOpen] = useState(false);
 
   const navigate = useNavigate();
   const profileCardRef = useRef(null);
@@ -155,41 +156,44 @@ function Home() {
 
   return (
     <div className="app">
-      <h1 className="title">YCrush 💙</h1>
+      <div className="nav-bar">
+        <div className="nav-left">
+          <h1 className="title">YCrush 💙</h1>
+        </div>
+        {user && (
+          <div className="nav-right">
+            <Link to="/profile" className="nav-btn">✏️ Edit Profile</Link>
+            <Link to="/matches" className="nav-btn">👥 Matches</Link>
+            <button onClick={logout} className="nav-btn nav-btn-logout">Logout</button>
+          </div>
+        )}
+      </div>
+
       {user ? (
         <>
-          <div className="user-box">
-            <div className="user-info">
-              <p>
-                Logged in as: <strong>{user.firstName} {user.lastName}</strong>
-              </p>
-              <Link to="/profile" className="btn btn-edit-profile">
-                ✏️ Edit Your Profile
-              </Link>
-            </div>
-          </div>
-
           <p className="likes-count">You have {likesCount} like(s).</p>
 
-          <div className="btn-row">
-            <button onClick={logout} className="btn btn-logout">Logout</button>
-            <Link to="/matches" className="btn btn-matches">Matches</Link>
-          </div>
-
-          <div className="year-filters">
-            <h3>Filter by Class Year:</h3>
-            <div className="checkbox-group">
-              {Object.entries(yearFilters).map(([year, checked]) => (
-                <label key={year} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => handleYearFilterChange(year)}
-                  />
-                  {year}
-                </label>
-              ))}
-            </div>
+          <div className="year-filter-dropdown">
+            <button 
+              className="year-filter-btn" 
+              onClick={() => setYearFiltersOpen(!yearFiltersOpen)}
+            >
+              🎓 Class Years {yearFiltersOpen ? '▼' : '▶'}
+            </button>
+            {yearFiltersOpen && (
+              <div className="year-filter-content">
+                {Object.entries(yearFilters).map(([year, checked]) => (
+                  <label key={year} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => handleYearFilterChange(year)}
+                    />
+                    {year}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="profile-card" ref={profileCardRef}>
@@ -267,8 +271,10 @@ function ProfileEdit() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const token = localStorage.getItem("authToken");
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -332,23 +338,91 @@ function ProfileEdit() {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file');
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await axios.post(
+        `${BACKEND_URL}/upload-image`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      setProfileData({ ...profileData, photo: res.data.url });
+    } catch (err) {
+      console.error('❌ Error uploading image:', err);
+      setError('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   if (loading) return <div className="app"><p>Loading...</p></div>;
 
   return (
     <div className="app">
-      <h1 className="title">Complete Your Profile</h1>
+      <div className="nav-bar">
+        <div className="nav-left">
+          <h1 className="title">YCrush 💙</h1>
+        </div>
+        <div className="nav-right">
+          <Link to="/" className="nav-btn">← Back to Home</Link>
+        </div>
+      </div>
+
+      <h2 className="section-title">Complete Your Profile</h2>
       {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit} className="profile-form">
         <div className="form-group">
-          <label>Profile Picture URL *</label>
-          <input
-            name="photo"
-            type="text"
-            value={profileData.photo || ""}
-            onChange={handleChange}
-            placeholder="Enter image URL"
-            required
-          />
+          <label>Profile Picture *</label>
+          <div className="image-upload">
+            {profileData?.photo && (
+              <img 
+                src={profileData.photo} 
+                alt="Profile Preview" 
+                className="image-preview"
+              />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+            />
+            <button
+              type="button"
+              className="btn btn-upload"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+            >
+              {uploadingImage ? 'Uploading...' : 'Choose Image'}
+            </button>
+          </div>
         </div>
 
         <div className="form-group">
