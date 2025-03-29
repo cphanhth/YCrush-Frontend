@@ -587,7 +587,10 @@ function Chat({ match, onClose }) {
       
       <div className="messages-container">
         {messages.map((msg, i) => {
-          const isSentByMe = msg.sender === user?._id || msg.sender.toString() === user?._id.toString();
+          const isSentByMe = user && (
+            msg.sender === user._id ||
+            msg.sender.toString() === user._id.toString()
+          );
           return (
             <div
               key={i}

@@ -650,25 +650,26 @@ body {
   padding: 8px 12px;
   border-radius: 18px;
   position: relative;
-  text-align: left;
+  margin: 4px 0;
 }
 
 .message p {
   margin: 0;
   word-wrap: break-word;
-  text-align: left;
 }
 
 .message.sent {
   align-self: flex-end;
   background-color: #0084ff;
   color: white;
+  margin-left: auto;
 }
 
 .message.received {
   align-self: flex-start;
   background-color: #f0f2f5;
   color: black;
+  margin-right: auto;
 }
 
 .timestamp {
@@ -676,11 +677,15 @@ body {
   opacity: 0.7;
   margin-top: 4px;
   display: block;
-  text-align: left;
 }
 
 .message.sent .timestamp {
   color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+}
+
+.message.received .timestamp {
+  text-align: left;
 }
 
 .message-form {
