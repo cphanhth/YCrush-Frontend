@@ -651,11 +651,13 @@ body {
   padding: 8px 12px;
   border-radius: 18px;
   position: relative;
+  text-align: left;
 }
 
 .message p {
   margin: 0;
   word-wrap: break-word;
+  text-align: left;
 }
 
 .message.sent {
@@ -675,6 +677,7 @@ body {
   opacity: 0.7;
   margin-top: 4px;
   display: block;
+  text-align: left;
 }
 
 .message.sent .timestamp {
@@ -753,14 +756,13 @@ body {
 
 .year-filter-content {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   right: 0;
-  margin-top: 8px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   padding: 8px;
-  min-width: 120px;
+  width: 120px;
 }
 
 .year-filter-content .checkbox-label {
@@ -772,6 +774,7 @@ body {
   transition: background-color 0.2s;
   border-radius: 4px;
   margin: 2px 0;
+  white-space: nowrap;
 }
 
 .year-filter-content .checkbox-label:hover {

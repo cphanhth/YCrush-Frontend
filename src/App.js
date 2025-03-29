@@ -561,11 +561,20 @@ function Chat({ match, onClose }) {
     if (!newMessage.trim() || !user) return;
 
     try {
-      socket.emit('private_message', {
+      const messageData = {
         sender: user._id,
         receiver: match._id,
         content: newMessage.trim()
-      });
+      };
+      
+      // Add message to local state immediately with the correct sender
+      setMessages(prev => [...prev, {
+        ...messageData,
+        timestamp: new Date(),
+        sender: user._id // Ensure sender is set correctly
+      }]);
+      
+      socket.emit('private_message', messageData);
       setNewMessage("");
     } catch (err) {
       console.error("Error sending message:", err);
@@ -586,7 +595,7 @@ function Chat({ match, onClose }) {
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`message ${msg.sender === user?._id ? 'sent' : 'received'}`}
+            className={`message ${msg.sender.toString() === user?._id.toString() ? 'sent' : 'received'}`}
           >
             <p>{msg.content}</p>
             <span className="timestamp">
