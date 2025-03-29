@@ -24,6 +24,23 @@ body {
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .nav-bar {
+    padding: 10px;
+  }
+
+  .nav-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
 }
 
 .nav-bar-centered {
@@ -157,8 +174,8 @@ body {
 }
 
 .profile-photo {
-  width: 300px;
-  height: 300px;
+  width: 150px;
+  height: 150px;
   border-radius: 10px;
   object-fit: cover;
   margin: 0 auto;
@@ -249,9 +266,9 @@ body {
 }
 
 .match-photo {
-  width: 100px;
-  height: 100px;
-  border-radius: 10px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   object-fit: cover;
 }
 
@@ -540,6 +557,36 @@ body {
   margin-top: 20px;
 }
 
+@media (max-width: 768px) {
+  .matches-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .matches-list {
+    flex: none;
+    max-height: 300px;
+  }
+
+  .chat-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    border-radius: 0;
+  }
+
+  .chat-header {
+    padding: 16px;
+  }
+
+  .messages-container {
+    height: calc(100vh - 130px);
+  }
+}
+
 .matches-list {
   flex: 0 0 300px;
   overflow-y: auto;
@@ -785,4 +832,29 @@ body {
 
 .year-filter-content .checkbox-label:hover {
   background-color: #f3f4f6;
+}
+
+/* Search Results */
+.match-box .match-photo {
+  width: 50px;
+  height: 50px;
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 10px;
+  }
+
+  .profile-card {
+    padding: 15px;
+  }
+
+  .match-box {
+    padding: 10px;
+  }
+
+  .nav-btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
 }
