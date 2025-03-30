@@ -9,10 +9,8 @@ import {
 } from "react-router-dom";
 import axios from "axios";
 import "./index.css";
-import { io } from "socket.io-client";
 
 const BACKEND_URL = "https://ycrush-backend.onrender.com";
-const socket = io(BACKEND_URL);
 
 function Home() {
   const [token, setToken] = useState(localStorage.getItem("authToken"));
@@ -516,7 +514,6 @@ function Chat({ match, onClose }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCurrentUser(res.data);
-        socket.emit('join', res.data._id);
       } catch (err) {
         console.error("Error fetching user:", err);
       }
@@ -524,64 +521,55 @@ function Chat({ match, onClose }) {
     fetchUser();
   }, [token]);
 
-  // Fetch existing messages
+  // Fetch messages with polling
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/chat/${match._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // Mark all existing messages as received
-        const markedMessages = res.data.map(msg => ({
-          ...msg,
-          isReceived: true
-        }));
-        setMessages(markedMessages);
+        setMessages(res.data);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching messages:", err);
         setLoading(false);
       }
     };
+
+    // Initial fetch
     if (currentUser) {
       fetchMessages();
     }
+
+    // Poll for new messages every 3 seconds
+    const pollInterval = setInterval(fetchMessages, 3000);
+
+    return () => clearInterval(pollInterval);
   }, [match._id, token, currentUser]);
-
-  // Handle incoming messages
-  useEffect(() => {
-    const handleNewMessage = (message) => {
-      // Mark incoming messages as received
-      setMessages(prev => [...prev, { ...message, isReceived: true }]);
-    };
-
-    socket.on('new_message', handleNewMessage);
-    return () => socket.off('new_message', handleNewMessage);
-  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = (e) => {
+  const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser) return;
 
-    const messageData = {
-      sender: currentUser._id,
-      receiver: match._id,
-      content: newMessage.trim(),
-      timestamp: new Date(),
-      isReceived: false // Mark as sent by current user
-    };
+    try {
+      // Send message to server
+      await axios.post(`${BACKEND_URL}/messages`, {
+        receiver: match._id,
+        content: newMessage.trim()
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    // Add to local state first
-    setMessages(prev => [...prev, messageData]);
-    
-    // Send to server
-    socket.emit('private_message', messageData);
-    setNewMessage("");
+      // Clear input
+      setNewMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
   if (loading) {
@@ -608,28 +596,24 @@ function Chat({ match, onClose }) {
       </div>
 
       <div className="messages-container">
-        {messages.map((message, index) => {
-          // Use isReceived flag instead of comparing sender IDs
-          const isReceived = message.isReceived;
-          return (
-            <div
-              key={index}
-              className={`message-wrapper ${isReceived ? 'received' : 'sent'}`}
-            >
-              <div className={`message ${isReceived ? 'received' : 'sent'}`}>
-                <div className="message-content">
-                  {message.content}
-                </div>
-                <div className="message-time">
-                  {new Date(message.timestamp).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </div>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`message-wrapper ${message.sender === currentUser._id ? 'sent' : 'received'}`}
+          >
+            <div className={`message ${message.sender === currentUser._id ? 'sent' : 'received'}`}>
+              <div className="message-content">
+                {message.content}
+              </div>
+              <div className="message-time">
+                {new Date(message.timestamp).toLocaleTimeString([], { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
         <div ref={messagesEndRef} />
       </div>
 
