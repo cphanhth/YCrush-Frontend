@@ -160,7 +160,7 @@ function Home() {
     <div className="app">
       <div className={`nav-bar ${!user ? 'nav-bar-centered' : ''}`}>
         <div className="nav-left">
-          <h1 className="title">YCrush 💙</h1>
+      <h1 className="title">YCrush 💙</h1>
         </div>
         {user && (
           <div className="nav-right">
@@ -239,11 +239,11 @@ function Home() {
               {searchResults.map((match) => (
                 <div key={match._id} className="match-box">
                   <div className="match-left">
-                    <img
+                  <img
                       src={match.photo || "https://picsum.photos/100"}
-                      alt="Match"
-                      className="match-photo"
-                    />
+                    alt="Match"
+                    className="match-photo"
+                  />
                     <div className="match-info">
                       <p className="match-name">{match.firstName} {match.lastName}</p>
                       <p className="match-college">{match.college}</p>
@@ -409,7 +409,7 @@ function ProfileEdit() {
                 className="image-preview"
               />
             )}
-            <input
+          <input
               type="file"
               accept="image/*"
               onChange={handleImageUpload}
@@ -689,17 +689,17 @@ function MatchesPage() {
               className={`match-box ${selectedMatch?._id === match._id ? 'selected' : ''}`}
               onClick={() => setSelectedMatch(match)}
             >
-              <img
-                src={match.photo || "https://picsum.photos/50"}
-                alt="Match"
-                className="match-photo"
-              />
+            <img
+              src={match.photo || "https://picsum.photos/50"}
+              alt="Match"
+              className="match-photo"
+            />
               <div className="match-info">
                 <p className="match-name">{match.firstName} {match.lastName}</p>
                 <p className="match-college">{match.college}</p>
               </div>
-            </div>
-          ))}
+          </div>
+        ))}
         </div>
 
         {selectedMatch && (
@@ -735,7 +735,7 @@ function AuthCallback() {
       })
       .catch(err => {
         console.error("❌ Error checking profile:", err);
-        navigate("/");
+      navigate("/");
       });
     } else {
       console.error("❌ No token found in callback");
