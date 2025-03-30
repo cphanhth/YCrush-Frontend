@@ -531,7 +531,12 @@ function Chat({ match, onClose }) {
         const res = await axios.get(`${BACKEND_URL}/chat/${match._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setMessages(res.data);
+        // Mark all existing messages as received
+        const markedMessages = res.data.map(msg => ({
+          ...msg,
+          isReceived: true
+        }));
+        setMessages(markedMessages);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching messages:", err);
@@ -546,7 +551,8 @@ function Chat({ match, onClose }) {
   // Handle incoming messages
   useEffect(() => {
     const handleNewMessage = (message) => {
-      setMessages(prev => [...prev, message]);
+      // Mark incoming messages as received
+      setMessages(prev => [...prev, { ...message, isReceived: true }]);
     };
 
     socket.on('new_message', handleNewMessage);
@@ -566,7 +572,8 @@ function Chat({ match, onClose }) {
       sender: currentUser._id,
       receiver: match._id,
       content: newMessage.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
+      isReceived: false // Mark as sent by current user
     };
 
     // Add to local state first
@@ -602,13 +609,14 @@ function Chat({ match, onClose }) {
 
       <div className="messages-container">
         {messages.map((message, index) => {
-          const isSentByMe = message.sender === currentUser?._id;
+          // Use isReceived flag instead of comparing sender IDs
+          const isReceived = message.isReceived;
           return (
             <div
               key={index}
-              className={`message-wrapper ${isSentByMe ? 'sent' : 'received'}`}
+              className={`message-wrapper ${isReceived ? 'received' : 'sent'}`}
             >
-              <div className={`message ${isSentByMe ? 'sent' : 'received'}`}>
+              <div className={`message ${isReceived ? 'received' : 'sent'}`}>
                 <div className="message-content">
                   {message.content}
                 </div>
