@@ -639,11 +639,11 @@ body {
 
 /* Chat Interface */
 .chat-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%;
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
@@ -651,9 +651,9 @@ body {
 .chat-header {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  background: #f0f2f5;
-  border-bottom: 1px solid #e4e6eb;
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid #eee;
 }
 
 .chat-avatar {
@@ -661,26 +661,20 @@ body {
   height: 40px;
   border-radius: 50%;
   margin-right: 12px;
-  object-fit: cover;
 }
 
 .chat-header h3 {
-  flex: 1;
   margin: 0;
-  font-size: 1.1em;
+  flex: 1;
 }
 
 .btn-close {
   background: none;
   border: none;
   font-size: 24px;
-  color: #65676b;
   cursor: pointer;
   padding: 0 8px;
-}
-
-.btn-close:hover {
-  color: #1b74e4;
+  color: #666;
 }
 
 .messages-container {
@@ -690,70 +684,77 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: #f5f5f5;
+}
+
+.message-wrapper {
+  display: flex;
+  width: 100%;
+}
+
+.message-wrapper.sent {
+  justify-content: flex-end;
+}
+
+.message-wrapper.received {
+  justify-content: flex-start;
 }
 
 .message {
   max-width: 70%;
-  padding: 8px 12px;
+  padding: 12px 16px;
   border-radius: 18px;
   position: relative;
-  margin: 4px 0;
 }
 
-.message p {
+.message.sent {
+  background-color: #0084ff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message.received {
+  background-color: white;
+  color: black;
+  border-bottom-left-radius: 4px;
+}
+
+.message-content {
   margin: 0;
   word-wrap: break-word;
 }
 
-.message.sent {
-  align-self: flex-end;
-  background-color: #0084ff;
-  color: white;
-  margin-left: auto;
-}
-
-.message.received {
-  align-self: flex-start;
-  background-color: #f0f2f5;
-  color: black;
-  margin-right: auto;
-}
-
-.timestamp {
+.message-time {
   font-size: 0.7em;
-  opacity: 0.7;
   margin-top: 4px;
-  display: block;
+  opacity: 0.7;
 }
 
-.message.sent .timestamp {
+.message.sent .message-time {
   color: rgba(255, 255, 255, 0.7);
   text-align: right;
 }
 
-.message.received .timestamp {
+.message.received .message-time {
+  color: rgba(0, 0, 0, 0.5);
   text-align: left;
 }
 
 .message-form {
   display: flex;
   padding: 16px;
-  gap: 8px;
   background: white;
-  border-top: 1px solid #e4e6eb;
+  border-top: 1px solid #eee;
+  gap: 8px;
 }
 
 .message-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e4e6eb;
+  border: 1px solid #ddd;
   border-radius: 20px;
-  font-size: 0.95em;
   outline: none;
-}
-
-.message-input:focus {
-  border-color: #1b74e4;
+  font-size: 14px;
 }
 
 .btn-send {
@@ -762,18 +763,13 @@ body {
   border: none;
   border-radius: 20px;
   padding: 8px 16px;
-  font-weight: 600;
   cursor: pointer;
+  font-weight: 500;
   transition: background-color 0.2s;
 }
 
 .btn-send:hover {
-  background-color: #0073e6;
-}
-
-.btn-send:disabled {
-  background-color: #e4e6eb;
-  cursor: not-allowed;
+  background: #0073e6;
 }
 
 /* Year Filter Menu */

@@ -506,16 +506,16 @@ function Chat({ match, onClose }) {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
   const token = localStorage.getItem("authToken");
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
+  // Fetch current user
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(res.data);
-        // Join socket room
+        setCurrentUser(res.data);
         socket.emit('join', res.data._id);
       } catch (err) {
         console.error("Error fetching user:", err);
@@ -524,6 +524,7 @@ function Chat({ match, onClose }) {
     fetchUser();
   }, [token]);
 
+  // Fetch existing messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -537,45 +538,59 @@ function Chat({ match, onClose }) {
         setLoading(false);
       }
     };
-    fetchMessages();
-  }, [match._id, token]);
+    if (currentUser) {
+      fetchMessages();
+    }
+  }, [match._id, token, currentUser]);
 
+  // Handle incoming messages
   useEffect(() => {
-    // Listen for new messages
-    socket.on('new_message', (message) => {
+    const handleNewMessage = (message) => {
       setMessages(prev => [...prev, message]);
-    });
-
-    return () => {
-      socket.off('new_message');
     };
+
+    socket.on('new_message', handleNewMessage);
+    return () => socket.off('new_message', handleNewMessage);
   }, []);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
-    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async (e) => {
+  const sendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !currentUser) return;
 
-    try {
-      const messageData = {
-        sender: user._id,
-        receiver: match._id,
-        content: newMessage.trim()
-      };
-      
-      // Don't add to local state immediately - wait for socket response
-      socket.emit('private_message', messageData);
-      setNewMessage("");
-    } catch (err) {
-      console.error("Error sending message:", err);
-    }
+    const messageData = {
+      sender: currentUser._id,
+      receiver: match._id,
+      content: newMessage.trim(),
+      timestamp: new Date()
+    };
+
+    // Add to local state first
+    setMessages(prev => [...prev, messageData]);
+    
+    // Send to server
+    socket.emit('private_message', messageData);
+    setNewMessage("");
   };
 
-  if (loading) return <div className="chat-container"><p>Loading...</p></div>;
+  if (loading) {
+    return (
+      <div className="chat-container">
+        <div className="chat-header">
+          <img src={match.photo || "https://picsum.photos/50"} alt="Match" className="chat-avatar" />
+          <h3>{match.firstName} {match.lastName}</h3>
+          <button onClick={onClose} className="btn-close">×</button>
+        </div>
+        <div className="messages-container">
+          <p>Loading messages...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chat-container">
@@ -584,22 +599,26 @@ function Chat({ match, onClose }) {
         <h3>{match.firstName} {match.lastName}</h3>
         <button onClick={onClose} className="btn-close">×</button>
       </div>
-      
+
       <div className="messages-container">
-        {messages.map((msg, i) => {
-          const isSentByMe = user && (
-            msg.sender === user._id ||
-            msg.sender.toString() === user._id.toString()
-          );
+        {messages.map((message, index) => {
+          const isSentByMe = message.sender === currentUser?._id;
           return (
             <div
-              key={i}
-              className={`message ${isSentByMe ? 'sent' : 'received'}`}
+              key={index}
+              className={`message-wrapper ${isSentByMe ? 'sent' : 'received'}`}
             >
-              <p>{msg.content}</p>
-              <span className="timestamp">
-                {new Date(msg.timestamp).toLocaleTimeString()}
-              </span>
+              <div className={`message ${isSentByMe ? 'sent' : 'received'}`}>
+                <div className="message-content">
+                  {message.content}
+                </div>
+                <div className="message-time">
+                  {new Date(message.timestamp).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </div>
+              </div>
             </div>
           );
         })}
