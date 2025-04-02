@@ -20,10 +20,10 @@ function Home() {
   const [searchResults, setSearchResults] = useState([]);
   const [likesCount, setLikesCount] = useState(0);
   const [yearFilters, setYearFilters] = useState({
-    2024: true,
     2025: true,
     2026: true,
-    2027: true
+    2027: true,
+    2028: true
   });
   const [yearFiltersOpen, setYearFiltersOpen] = useState(false);
 
